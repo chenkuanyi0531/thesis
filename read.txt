@@ -1,0 +1,85 @@
+
+
+1.# Datasets
+1. UCF-Crimes dataset <br /> 
+(dataset at `/media/ee401-2/dataset110`) <br />
+2. ShanghaiTech dataset <br />
+(dataset at `/media/ee401-2/dataset110`)<br />
+3. XD-Violence dataset <br />
+(dataset at `/media/ee401-2/dataset110`)<br />
+
+
+1.# Code's Organization
+    ├── analysis		# evaluation codes
+  	├── demo     # illustrative demo
+  	├── docs     # the relevant information about the framework (paper)
+  	├── logs     # data logs
+  	├── results     # contains the anomaly scores
+	├── src                      
+            ├── constMIL            # Contrastive MIL
+            ├── list          # list of data
+            ├── scripts      # simple scripts to run the project
+            ├── tensorRT       # simple example of tensorRT for Jetson nano
+            ├── models       # Generated models
+            ├── train.py        # train model and get the auc
+            ├── temporal_shift.py # tsm model and improved TSM
+            ├── model_tem.py  # tsm +2d cnn output and spatial temporal attention encoder and consensus model
+2. # descriptions of each function
+1/
+******block local self-attention
+
+in src/temporal_shift.py
+class TemporalShiftSA 
+change the class in make_temporal_shift
+	  for i, b in enumerate(blocks):
+                    blocks[i] = TemporalShift(b, n_segment=this_segment, n_div=n_div)  // TemporalShift change to TemporalShiftSA 
+                return nn.Sequential(*(blocks))
+input  (b, n_segment=this_segment, n_div=n_div)
+output blocks[i] 
+
+2/
+********self-attention padding
+
+in src/temporal_shift.py
+class TemporalShift
+
+
+input  out(nt, c, h, w)
+output out(nt, c, h, w)
+
+3/
+*******spatial temporal attention encoder
+in src/model_tem.py
+in   def forward(self, input, no_reshape=False):
+
+input base_out
+output base_out = base_out1(temporal ) + base_outsa (spatial )
+
+
+3.
+# Training and Testing
+1/conda activate tsmself
+2/python train.py --dataset violence   --backbone resnet50 --modules TSM      --gd 16 --lr 0.0003 --lr_steps 40 80 --epochs 30      --batch_size 8 -j 16 --dropout 0.8 --eval-freq=1      --shift --shift_div=8 --shift_place=blockre
+
+
+test 
+1.pth to frame score (in /src)
+pth will output at dataset110/server/results/relationCRF/pth
+python video2frame.py violence /media/ee401-2/dataset110/server/results/rel
+ationCRF/pth/violence_TSM_e800_c8_bresnet50_8_checkpoint.pth.tar --backbone resnet50 --consensus_type TSM --shift --shift_div=8 --shift_place=blockres
+2. txt to auc
+	1. you will get the txt for your model in /anomaly_det/results_new/dataset/xxx(same as pth name).txt
+	2.put your txt into /anomaly_det/analysis_python/
+	3. change the code calculate_auc_dataset(xd/ucf/shanghai).py score to your txt name
+	4. run the code calculate_auc_dataset(xd/ucf/shanghai).py 
+	python calculate_auc_xd.py 
+	python calculate_auc_ucf.py
+	python calculate_auc_shanghai.py  
+
+4.
+The code is built with following libraries:
+
+PyTorch 1.2.0
+numpy 1.16.2
+torchvision 0.4.0
+scikit-learn  0.23.2
